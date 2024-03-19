@@ -14,10 +14,15 @@ class Catalog(Table, db = DB):
 class Thread(Table, db = DB):
     number = Integer(unique = True)
     catalog = ForeignKey(references=Catalog)
+    hasBeen = Boolean(default=False)
 
 class ThreadItem(Table, db = DB):
     thread = ForeignKey(references=Thread)
     type = Varchar(10)
+
+    def __str__(self) -> str:
+        return self.thread.number
+
 
 #DB.create_tables(if_not_exists=True)
 

@@ -1,14 +1,8 @@
-from database import select
-from database import initDatabase
-import asyncio
+from telegram import bot
 
 
-async def test():
-    print(await select.ListCatalogs())
-    print(await select.ListThreads())
-    print(await select.ListThreadItems())
-    print(await select.ListTodos())
 
-
-asyncio.run(test())
+# asyncio.run(test())
+bot.startTelegramPolling()
+#set_event_loop(new_event_loop())
 #asyncio.run(initDatabase())
