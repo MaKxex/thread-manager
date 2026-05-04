@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Catalog {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  threads Thread[]
+}
+
+model Thread {
+  id        Int          @id @default(autoincrement())
+  number    Int          @unique
+  name      String       @default("")
+  color     String       @default("")
+  catalog   Catalog      @relation(fields: [catalogId], references: [id])
+  catalogId Int
+  hasBeen   Boolean      @default(false)
+  items     ThreadItem[]
+}
+
+model ThreadItem {
+  id       Int    @id @default(autoincrement())
+  thread   Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId Int
+  type     String @db.VarChar(10)
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+model User {
+  id        String     @id
+  firstName String?
+  lastName  String?
+  username  String?
+  photoUrl  String?
+  role      UserRole   @default(USER)
+  status    UserStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  todos     Todo[]
+}
+
+model Todo {
+  id           Int     @id @default(autoincrement())
+  text         String
+  completed    Boolean @default(false)
+  createdById  String?
+  createdBy    User?   @relation(fields: [createdById], references: [id])
+}
