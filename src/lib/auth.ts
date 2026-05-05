@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import { UserRole, UserStatus } from "@/generated/prisma/client";
+import { UserRole, UserStatus } from "@/generated/prisma/client/client";
 import { prisma } from "@/lib/prisma";
 import { validateInitData } from "@/lib/telegram";
 
