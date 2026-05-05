@@ -1,6 +1,5 @@
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifySession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminPanel } from "@/components/admin-panel";
 import Link from "next/link";
@@ -8,16 +7,19 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
+  const headersList = await headers();
+  const userId = headersList.get("x-user-id");
+  const userRole = headersList.get("x-user-role");
 
-  if (!token) redirect("/");
+  if (!userId || userRole !== "ADMIN") {
+    redirect("/");
+  }
 
-  const payload = await verifySession(token);
-  if (!payload) redirect("/");
+  const user = await prisma.user.findUnique({ where: { id: userId } });
 
-  const user = await prisma.user.findUnique({ where: { id: payload.sub } });
-  if (!user || user.status !== "ACTIVE" || user.role !== "ADMIN") redirect("/");
+  if (!user) {
+    redirect("/");
+  }
 
   const pendingUsers = await prisma.user.findMany({
     where: { status: "PENDING" },

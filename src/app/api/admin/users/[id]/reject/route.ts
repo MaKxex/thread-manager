@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthFromMiddleware } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const authResult = await requireAuth(request, { role: "ADMIN" });
+    const authResult = await requireAuthFromMiddleware(request, { role: "ADMIN" });
 
     if (!authResult.ok) {
       return NextResponse.json(

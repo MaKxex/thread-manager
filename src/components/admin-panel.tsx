@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { AuthUser } from "@/lib/auth";
+
+interface AdminUser {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  role: string;
+}
 
 interface PendingUser {
   id: string;
@@ -15,7 +22,7 @@ interface PendingUser {
 }
 
 interface AdminPanelProps {
-  adminUser: AuthUser;
+  adminUser: AdminUser;
   pendingUsers: PendingUser[];
 }
 

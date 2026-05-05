@@ -1,5 +1,4 @@
-import { cookies } from "next/headers";
-import { verifySession } from "@/lib/auth";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { ThreadDetail } from "@/components/thread-detail";
 import { TelegramGate } from "@/components/telegram-gate";
@@ -13,21 +12,15 @@ export default async function ThreadPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  let authUser = null;
+  const headersList = await headers();
+  const userId = headersList.get("x-user-id");
 
-  if (token) {
-    const payload = await verifySession(token);
-    if (payload) {
-      const user = await prisma.user.findUnique({ where: { id: payload.sub } });
-      if (user && user.status === "ACTIVE") {
-        authUser = user;
-      }
-    }
+  if (!userId) {
+    return <TelegramGate />;
   }
 
-  if (!authUser) {
+  const authUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!authUser || authUser.status !== "ACTIVE") {
     return <TelegramGate />;
   }
 

@@ -141,6 +141,51 @@ export async function requireAuth(
   return { ok: true, user };
 }
 
+export function getAuthHeaders(request: Request): {
+  userId: string | null;
+  userRole: string | null;
+} {
+  return {
+    userId: request.headers.get("x-user-id"),
+    userRole: request.headers.get("x-user-role"),
+  };
+}
+
+export async function getAuthUser(
+  request: Request
+): Promise<AuthUser | null> {
+  const { userId } = getAuthHeaders(request);
+  if (!userId) return null;
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  return (user as AuthUser) ?? null;
+}
+
+export async function requireAuthFromMiddleware(
+  request: Request,
+  options?: { role?: "ADMIN" }
+): Promise<AuthResult> {
+  const user = await getAuthUser(request);
+
+  if (!user) {
+    return { ok: false, error: "Not authenticated", code: 401 };
+  }
+
+  if (user.status === UserStatus.REJECTED) {
+    return { ok: false, error: "Access denied", code: 403 };
+  }
+
+  if (user.status === UserStatus.PENDING) {
+    return { ok: false, error: "Account pending approval", code: 403 };
+  }
+
+  if (options?.role === "ADMIN" && user.role !== UserRole.ADMIN) {
+    return { ok: false, error: "Admin access required", code: 403 };
+  }
+
+  return { ok: true, user };
+}
+
 export function setAuthCookie(token: string): Record<string, string> {
   return {
     "Set-Cookie": `auth_token=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SEVEN_DAYS_SECONDS}`,

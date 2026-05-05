@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthFromMiddleware } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
-  const authResult = await requireAuth(request);
+  const authResult = await requireAuthFromMiddleware(request);
   if (!authResult.ok) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.code });
   }
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireAuth(request);
+  const authResult = await requireAuthFromMiddleware(request);
   if (!authResult.ok) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.code });
   }
