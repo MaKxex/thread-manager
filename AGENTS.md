@@ -71,7 +71,8 @@ legacy/                        # Old Python/aiogram code (deprecated)
 - All DB-facing pages use `export const dynamic = "force-dynamic"` (no static prerender — requires live DB)
 - Client components (`"use client"`) only where needed: counters, forms, interactive UI
 - Prisma 7 import: `import { PrismaClient } from "@/generated/prisma/client"` (NOT `@prisma/client`)
-- API routes validate Telegram `initData` via `src/lib/telegram.ts` (not currently enforced — add middleware when ready)
+- API routes validate Telegram `initData` via `src/lib/telegram.ts` (not currently enforced — add `src/proxy.ts` when ready)
+- **Proxy**: Next.js 16 uses `src/proxy.ts` (not `middleware.ts`) for request interception. The `proxy` file convention replaces the deprecated `middleware` convention.
 - CSV color data is seeded to DB via `prisma/seed.ts`; app reads colors from `Thread.name` / `Thread.color` columns
 
 ## Supabase Connection Notes
