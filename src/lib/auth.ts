@@ -24,6 +24,9 @@ export async function signInWithTelegram(initData: string): Promise<AuthResult> 
   const result = validateInitData(initData);
 
   if (!result || !result.valid) {
+    if (result?.tokenMissing) {
+      return { ok: false, error: "Bot token not configured", code: 500 };
+    }
     return { ok: false, error: "Invalid init data", code: 401 };
   }
 
@@ -39,12 +42,15 @@ export async function signInWithTelegram(initData: string): Promise<AuthResult> 
   const username: string | null = telegramUser.username ?? null;
   const photoUrl: string | null = (parsedUser.photo_url as string) ?? null;
 
-  const adminTelegramId = process.env.ADMIN_TELEGRAM_ID;
+  const adminTelegramId = process.env.ADMIN_TELEGRAM_ID
+    ?.replace(/^["']|["']$/g, "")
+    .trim();
 
   let user = await prisma.user.findUnique({ where: { id: userId } });
 
+  const isAdmin = adminTelegramId && userId === adminTelegramId;
+
   if (!user) {
-    const isAdmin = adminTelegramId && userId === adminTelegramId;
     user = await prisma.user.create({
       data: {
         id: userId,
@@ -61,13 +67,19 @@ export async function signInWithTelegram(initData: string): Promise<AuthResult> 
       return { ok: false, error: "Access denied", code: 403 };
     }
 
-    if (user.status === UserStatus.PENDING) {
+    if (user.status === UserStatus.PENDING && !isAdmin) {
       return { ok: false, error: "Account pending approval", code: 403 };
     }
 
     user = await prisma.user.update({
       where: { id: userId },
-      data: { firstName, lastName, username, photoUrl },
+      data: {
+        firstName,
+        lastName,
+        username,
+        photoUrl,
+        ...(isAdmin ? { role: UserRole.ADMIN, status: UserStatus.ACTIVE } : {}),
+      },
     });
   }
 
