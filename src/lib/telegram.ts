@@ -7,22 +7,20 @@ function hmacSHA256(key: Buffer, data: string): Buffer {
   return createHmac("sha256", key).update(data).digest();
 }
 
-export function validateInitData(initData: string): {
-  valid: boolean;
-  tokenMissing?: boolean;
-  user?: { id: number; first_name: string; username?: string };
-} | null {
+export type ValidateResult =
+  | { valid: true; user: { id: number; first_name: string; username?: string } }
+  | { valid: false; reason: string };
+
+export function validateInitData(initData: string): ValidateResult {
   try {
     if (!BOT_TOKEN) {
-      console.error("[telegram] BOT_TOKEN is not configured in .env");
-      return { valid: false, tokenMissing: true };
+      return { valid: false, reason: "Bot token not configured on server" };
     }
 
     const params = new URLSearchParams(initData);
     const hash = params.get("hash");
     if (!hash) {
-      console.error("[telegram] initData missing hash");
-      return { valid: false };
+      return { valid: false, reason: "Missing hash in Telegram data" };
     }
 
     params.delete("hash");
@@ -42,24 +40,23 @@ export function validateInitData(initData: string): {
       .digest("hex");
 
     if (computedHash !== hash) {
-      console.error("[telegram] Hash mismatch. Computed:", computedHash, "Expected:", hash);
-      console.error("[telegram] Check string:", checkString);
-      return { valid: false };
+      return { valid: false, reason: "Hash mismatch (wrong bot token?)" };
     }
 
     const userJson = params.get("user");
-    const user = userJson ? JSON.parse(userJson) : undefined;
+    if (!userJson) {
+      return { valid: false, reason: "Missing user in Telegram data" };
+    }
+    const user = JSON.parse(userJson);
 
     const authDate = Number(params.get("auth_date"));
     const now = Math.floor(Date.now() / 1000);
-    if (now - authDate > 86400) {
-      console.error("[telegram] auth_date expired:", authDate);
-      return { valid: false };
+    if (now - authDate > 7 * 86400) {
+      return { valid: false, reason: "Telegram data expired (auth_date too old)" };
     }
 
     return { valid: true, user };
   } catch (err) {
-    console.error("[telegram] validateInitData exception:", err);
-    return null;
+    return { valid: false, reason: "Validation exception: " + (err as Error).message };
   }
 }

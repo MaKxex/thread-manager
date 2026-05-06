@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 
 export function TelegramGate() {
   const [status, setStatus] = useState<
-    "loading" | "active" | "pending" | "rejected" | "new" | "no_telegram"
+    "loading" | "active" | "pending" | "rejected" | "new" | "no_telegram" | "error"
   >("loading");
-  const [message, setMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const initData = WebApp.initData;
@@ -29,22 +29,28 @@ export function TelegramGate() {
           return;
         }
 
+        const data = await res.json().catch(() => ({}));
+        const err = data.error || "Unknown error";
+
         if (res.status === 403) {
-          const data = await res.json();
-          if (data.error?.includes("pending")) {
+          if (err.includes("pending")) {
             setStatus("pending");
-          } else if (data.error?.includes("denied") || data.error?.includes("rejected")) {
-            setStatus("rejected");
-          } else {
-            setStatus("new");
+            return;
           }
-          return;
+          if (err.includes("denied") || err.includes("rejected")) {
+            setStatus("rejected");
+            setErrorMessage(err);
+            return;
+          }
         }
 
-        setStatus("new");
+        // Любая другая ошибка (401, 400, 500) — показываем текст ошибки
+        setStatus("error");
+        setErrorMessage(err);
       })
-      .catch(() => {
-        setStatus("new");
+      .catch((e) => {
+        setStatus("error");
+        setErrorMessage("Network error: " + (e as Error).message);
       });
   }, []);
 
@@ -69,12 +75,12 @@ export function TelegramGate() {
       } else if (data.status === "active") {
         window.location.reload();
       } else if (data.error) {
-        setMessage(data.error);
+        setErrorMessage(data.error);
       } else {
         setStatus("pending");
       }
-    } catch {
-      setMessage("Ошибка при отправке запроса");
+    } catch (e) {
+      setErrorMessage("Ошибка при отправке запроса: " + (e as Error).message);
     }
   }
 
@@ -117,8 +123,22 @@ export function TelegramGate() {
           </div>
         )}
 
-        {message && (
-          <p className="text-xs text-red-500">{message}</p>
+        {status === "error" && (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-red-500">Ошибка авторизации</p>
+            <div className="rounded-md bg-muted p-3 text-left">
+              <p className="text-xs text-muted-foreground break-words">
+                {errorMessage}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Если ошибка &quot;Hash mismatch&quot; — проверь, что BOT_TOKEN в Vercel от того же бота, через которого открываешь приложение.
+            </p>
+          </div>
+        )}
+
+        {errorMessage && status !== "error" && (
+          <p className="text-xs text-red-500">{errorMessage}</p>
         )}
       </div>
     </div>

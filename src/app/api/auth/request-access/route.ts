@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signInWithTelegram } from "@/lib/auth";
-import { notifyAdminAccessRequest } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -36,11 +35,6 @@ export async function POST(request: NextRequest) {
 
     if (user.status === "REJECTED") {
       return NextResponse.json({ error: "Access rejected" }, { status: 403 });
-    }
-
-    if (user.status === "PENDING") {
-      await notifyAdminAccessRequest(user);
-      return NextResponse.json({ status: "pending" });
     }
 
     if (user.status === "ACTIVE") {

@@ -23,11 +23,8 @@ const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60;
 export async function signInWithTelegram(initData: string): Promise<AuthResult> {
   const result = validateInitData(initData);
 
-  if (!result || !result.valid) {
-    if (result?.tokenMissing) {
-      return { ok: false, error: "Bot token not configured", code: 500 };
-    }
-    return { ok: false, error: "Invalid init data", code: 401 };
+  if (!result.valid) {
+    return { ok: false, error: result.reason, code: 401 };
   }
 
   const telegramUser = result.user!;
@@ -200,13 +197,13 @@ export async function requireAuthFromMiddleware(
 
 export function setAuthCookie(token: string): Record<string, string> {
   return {
-    "Set-Cookie": `auth_token=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SEVEN_DAYS_SECONDS}`,
+    "Set-Cookie": `auth_token=${token}; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=${SEVEN_DAYS_SECONDS}`,
   };
 }
 
 export function clearAuthCookie(): Record<string, string> {
   return {
     "Set-Cookie":
-      "auth_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
+      "auth_token=; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=0",
   };
 }
