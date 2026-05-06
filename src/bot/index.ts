@@ -1,8 +1,12 @@
 import { Bot, InlineKeyboard } from "grammy";
 import { BOT_TOKEN } from "./config";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client/client";
+import pg from "pg";
 
-const prisma = new PrismaClient();
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 const bot = new Bot(BOT_TOKEN);
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://your-app.vercel.app";
