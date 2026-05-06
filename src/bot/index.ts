@@ -1,6 +1,6 @@
 import { Bot, InlineKeyboard } from "grammy";
 import { BOT_TOKEN } from "./config";
-import { PrismaClient } from "../generated/prisma/client";
+import { PrismaClient } from "../generated/prisma/client/client";
 
 const prisma = new PrismaClient();
 const bot = new Bot(BOT_TOKEN);
